@@ -46,24 +46,8 @@ client.once("ready", () => {
 
 
 // ==========================================
-// DEBUG DO DISCORD
+// EVENTOS DE CONEXÃO
 // ==========================================
-
-client.on("debug", (mensagem) => {
-
-    console.log("🔎 DISCORD DEBUG:");
-    console.log(mensagem);
-
-});
-
-
-client.on("warn", (mensagem) => {
-
-    console.log("⚠️ DISCORD AVISO:");
-    console.log(mensagem);
-
-});
-
 
 client.on("error", (erro) => {
 
@@ -91,7 +75,9 @@ client.on("shardDisconnect", (evento, id) => {
 
     console.log(`🔴 SHARD DESCONECTADO: ${id}`);
 
-    console.log(evento);
+    if (evento) {
+        console.log(`Código: ${evento.code}`);
+    }
 
 });
 
@@ -99,7 +85,6 @@ client.on("shardDisconnect", (evento, id) => {
 client.on("shardError", (erro, id) => {
 
     console.error(`❌ ERRO NO SHARD ${id}:`);
-
     console.error(erro);
 
 });
@@ -139,7 +124,7 @@ app.get("/", (req, res) => {
 
 
 // ==========================================
-// TESTE DO SERVIDOR
+// TESTE
 // ==========================================
 
 app.get("/teste", (req, res) => {
@@ -523,16 +508,7 @@ console.log(
 if (!process.env.DISCORD_TOKEN) {
 
     console.error(
-        "========================================"
-    );
-
-    console.error(
         "❌ DISCORD_TOKEN NÃO FOI ENCONTRADO!"
-    );
-
-    console.error(
-        "========================================"
-
     );
 
 } else {
@@ -546,39 +522,28 @@ if (!process.env.DISCORD_TOKEN) {
     );
 
 
-    client
-        .login(
-            process.env.DISCORD_TOKEN
-        )
+    client.login(
+        process.env.DISCORD_TOKEN
+    )
+    .then(() => {
 
-        .then(() => {
+        console.log(
+            "✅ LOGIN ENVIADO AO DISCORD!"
+        );
 
-            console.log(
-                "✅ LOGIN DO DISCORD ACEITO!"
-            );
+        console.log(
+            "🔄 Aguardando evento READY..."
+        );
 
-            console.log(
-                "🔄 Aguardando evento READY..."
-            );
+    })
+    .catch((erro) => {
 
-        })
+        console.error(
+            "❌ ERRO AO CONECTAR AO DISCORD:"
+        );
 
-        .catch((erro) => {
+        console.error(erro);
 
-            console.error(
-                "========================================"
-            );
-
-            console.error(
-                "❌ ERRO AO CONECTAR AO DISCORD"
-            );
-
-            console.error(erro);
-
-            console.error(
-                "========================================"
-            );
-
-        });
+    });
 
 }
