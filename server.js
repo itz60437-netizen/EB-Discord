@@ -13,9 +13,9 @@ const {
 } = require("discord.js");
 
 
-// ==============================
+// ==========================================
 // CONFIGURAÇÕES
-// ==============================
+// ==========================================
 
 const app = express();
 
@@ -30,38 +30,84 @@ const client = new Client({
 const estados = new Map();
 
 
-// ==============================
+// ==========================================
 // BOT DISCORD
-// ==============================
+// ==========================================
 
 client.once("ready", () => {
 
-    console.log("=================================");
+    console.log("========================================");
     console.log("🤖 BOT DISCORD ONLINE!");
     console.log(`🤖 Nome: ${client.user.tag}`);
     console.log(`🆔 ID: ${client.user.id}`);
-    console.log("=================================");
+    console.log("========================================");
 
 });
 
 
-// ==============================
-// ERROS DO BOT
-// ==============================
+// ==========================================
+// DEBUG DO DISCORD
+// ==========================================
+
+client.on("debug", (mensagem) => {
+
+    console.log("🔎 DISCORD DEBUG:");
+    console.log(mensagem);
+
+});
+
+
+client.on("warn", (mensagem) => {
+
+    console.log("⚠️ DISCORD AVISO:");
+    console.log(mensagem);
+
+});
+
 
 client.on("error", (erro) => {
 
-    console.error("=================================");
-    console.error("❌ ERRO NO DISCORD.JS");
+    console.error("❌ ERRO DO DISCORD.JS:");
     console.error(erro);
-    console.error("=================================");
 
 });
 
 
-// ==============================
+client.on("shardReady", (id) => {
+
+    console.log(`🟢 SHARD CONECTADO: ${id}`);
+
+});
+
+
+client.on("shardReconnecting", (id) => {
+
+    console.log(`🔄 SHARD RECONECTANDO: ${id}`);
+
+});
+
+
+client.on("shardDisconnect", (evento, id) => {
+
+    console.log(`🔴 SHARD DESCONECTADO: ${id}`);
+
+    console.log(evento);
+
+});
+
+
+client.on("shardError", (erro, id) => {
+
+    console.error(`❌ ERRO NO SHARD ${id}:`);
+
+    console.error(erro);
+
+});
+
+
+// ==========================================
 // SITE
-// ==============================
+// ==========================================
 
 app.get("/", (req, res) => {
 
@@ -92,30 +138,35 @@ app.get("/", (req, res) => {
 });
 
 
-// ==============================
-// TESTE
-// ==============================
+// ==========================================
+// TESTE DO SERVIDOR
+// ==========================================
 
 app.get("/teste", (req, res) => {
 
     res.json({
-        status: "online",
+
         servidor: "EB Discord",
+
+        status: "online",
+
         bot: client.user
             ? client.user.tag
             : "offline"
+
     });
 
 });
 
 
-// ==============================
+// ==========================================
 // OAUTH ROBLOX
-// ==============================
+// ==========================================
 
 app.get("/oauth/start", (req, res) => {
 
     const discordId = req.query.discord;
+
 
     if (!discordId) {
 
@@ -125,6 +176,7 @@ app.get("/oauth/start", (req, res) => {
 
     }
 
+
     if (!process.env.ROBLOX_CLIENT_ID) {
 
         return res.status(500).send(
@@ -133,6 +185,7 @@ app.get("/oauth/start", (req, res) => {
 
     }
 
+
     if (!process.env.ROBLOX_REDIRECT_URI) {
 
         return res.status(500).send(
@@ -140,6 +193,7 @@ app.get("/oauth/start", (req, res) => {
         );
 
     }
+
 
     const state = crypto
         .randomBytes(32)
@@ -163,11 +217,14 @@ app.get("/oauth/start", (req, res) => {
         redirect_uri:
             process.env.ROBLOX_REDIRECT_URI,
 
-        response_type: "code",
+        response_type:
+            "code",
 
-        state: state,
+        state:
+            state,
 
-        scope: "openid profile"
+        scope:
+            "openid profile"
 
     });
 
@@ -187,9 +244,9 @@ app.get("/oauth/start", (req, res) => {
 });
 
 
-// ==============================
+// ==========================================
 // CALLBACK ROBLOX
-// ==============================
+// ==========================================
 
 app.get("/callback", async (req, res) => {
 
@@ -259,7 +316,7 @@ app.get("/callback", async (req, res) => {
 
 
     console.log(
-        `🔑 Código OAuth recebido.`
+        "🔑 Código OAuth recebido."
     );
 
 
@@ -286,7 +343,6 @@ app.get("/callback", async (req, res) => {
             padding-top: 80px;
 
         }
-
 
         h1 {
 
@@ -319,9 +375,9 @@ app.get("/callback", async (req, res) => {
 });
 
 
-// ==============================
+// ==========================================
 // COMANDO /VINCULAR
-// ==============================
+// ==========================================
 
 client.on(
     "interactionCreate",
@@ -426,9 +482,9 @@ client.on(
 );
 
 
-// ==============================
+// ==========================================
 // SERVIDOR WEB
-// ==============================
+// ==========================================
 
 app.listen(
     PORT,
@@ -436,7 +492,7 @@ app.listen(
     () => {
 
         console.log(
-            "================================="
+            "========================================"
         );
 
         console.log(
@@ -444,20 +500,20 @@ app.listen(
         );
 
         console.log(
-            `🌐 Porta: ${PORT}`
+            `🌐 PORTA: ${PORT}`
         );
 
         console.log(
-            "================================="
+            "========================================"
         );
 
     }
 );
 
 
-// ==============================
+// ==========================================
 // LOGIN DO DISCORD
-// ==============================
+// ==========================================
 
 console.log(
     "🔄 Verificando DISCORD_TOKEN..."
@@ -467,7 +523,7 @@ console.log(
 if (!process.env.DISCORD_TOKEN) {
 
     console.error(
-        "================================="
+        "========================================"
     );
 
     console.error(
@@ -475,7 +531,8 @@ if (!process.env.DISCORD_TOKEN) {
     );
 
     console.error(
-        "================================="
+        "========================================"
+
     );
 
 } else {
@@ -497,7 +554,11 @@ if (!process.env.DISCORD_TOKEN) {
         .then(() => {
 
             console.log(
-                "🔄 Login enviado ao Discord..."
+                "✅ LOGIN DO DISCORD ACEITO!"
+            );
+
+            console.log(
+                "🔄 Aguardando evento READY..."
             );
 
         })
@@ -505,7 +566,7 @@ if (!process.env.DISCORD_TOKEN) {
         .catch((erro) => {
 
             console.error(
-                "================================="
+                "========================================"
             );
 
             console.error(
@@ -515,7 +576,7 @@ if (!process.env.DISCORD_TOKEN) {
             console.error(erro);
 
             console.error(
-                "================================="
+                "========================================"
             );
 
         });
