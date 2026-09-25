@@ -1,3 +1,4 @@
+cat > server.js <<'EOF'
 require("dotenv").config();
 
 const express = require("express");
@@ -12,538 +13,120 @@ const {
     EmbedBuilder
 } = require("discord.js");
 
-
-// ==========================================
-// CONFIGURAÇÕES
-// ==========================================
-
 const app = express();
-
 const PORT = process.env.PORT || 3000;
 
 const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds
-    ]
+    intents: [GatewayIntentBits.Guilds]
 });
 
 const estados = new Map();
 
-
-// ==========================================
-// BOT DISCORD
-// ==========================================
-
 client.once("ready", () => {
-
-    console.log("========================================");
-    console.log("🤖 BOT DISCORD ONLINE!");
-    console.log(`🤖 Nome: ${client.user.tag}`);
-    console.log(`🆔 ID: ${client.user.id}`);
-    console.log("========================================");
-
+    console.log(`Bot online como ${client.user.tag}`);
 });
-
-
-// ==========================================
-// EVENTOS DE CONEXÃO
-// ==========================================
-
-client.on("error", (erro) => {
-
-    console.error("❌ ERRO DO DISCORD.JS:");
-    console.error(erro);
-
-});
-
-
-client.on("shardReady", (id) => {
-
-    console.log(`🟢 SHARD CONECTADO: ${id}`);
-
-});
-
-
-client.on("shardReconnecting", (id) => {
-
-    console.log(`🔄 SHARD RECONECTANDO: ${id}`);
-
-});
-
-
-client.on("shardDisconnect", (evento, id) => {
-
-    console.log(`🔴 SHARD DESCONECTADO: ${id}`);
-
-    if (evento) {
-        console.log(`Código: ${evento.code}`);
-    }
-
-});
-
-
-client.on("shardError", (erro, id) => {
-
-    console.error(`❌ ERRO NO SHARD ${id}:`);
-    console.error(erro);
-
-});
-
-
-// ==========================================
-// SITE
-// ==========================================
 
 app.get("/", (req, res) => {
-
-    res.send(`
-<!DOCTYPE html>
-
-<html>
-
-<head>
-
-    <meta charset="UTF-8">
-
-    <title>EB Discord</title>
-
-</head>
-
-<body>
-
-    <h1>Servidor EB Discord funcionando! ✅</h1>
-
-    <p>Servidor web online.</p>
-
-</body>
-
-</html>
-    `);
-
+    res.send("Servidor EB Discord funcionando!");
 });
-
-
-// ==========================================
-// TESTE
-// ==========================================
-
-app.get("/teste", (req, res) => {
-
-    res.json({
-
-        servidor: "EB Discord",
-
-        status: "online",
-
-        bot: client.user
-            ? client.user.tag
-            : "offline"
-
-    });
-
-});
-
-
-// ==========================================
-// OAUTH ROBLOX
-// ==========================================
 
 app.get("/oauth/start", (req, res) => {
-
     const discordId = req.query.discord;
 
-
     if (!discordId) {
-
-        return res.status(400).send(
-            "Discord não informado."
-        );
-
+        return res.status(400).send("Discord não informado.");
     }
 
-
-    if (!process.env.ROBLOX_CLIENT_ID) {
-
-        return res.status(500).send(
-            "ROBLOX_CLIENT_ID não configurado."
-        );
-
-    }
-
-
-    if (!process.env.ROBLOX_REDIRECT_URI) {
-
-        return res.status(500).send(
-            "ROBLOX_REDIRECT_URI não configurado."
-        );
-
-    }
-
-
-    const state = crypto
-        .randomBytes(32)
-        .toString("hex");
-
+    const state = crypto.randomBytes(32).toString("hex");
 
     estados.set(state, {
-
         discordId: discordId,
-
         criado: Date.now()
-
     });
-
 
     const params = new URLSearchParams({
-
-        client_id:
-            process.env.ROBLOX_CLIENT_ID,
-
-        redirect_uri:
-            process.env.ROBLOX_REDIRECT_URI,
-
-        response_type:
-            "code",
-
-        state:
-            state,
-
-        scope:
-            "openid profile"
-
+        client_id: process.env.ROBLOX_CLIENT_ID,
+        redirect_uri: process.env.ROBLOX_REDIRECT_URI,
+        response_type: "code",
+        state: state,
+        scope: "openid profile"
     });
-
 
     const url =
         "https://apis.roblox.com/oauth/v1/authorize?" +
         params.toString();
 
-
-    console.log(
-        `🔗 OAuth iniciado para Discord ID: ${discordId}`
-    );
-
-
     res.redirect(url);
-
 });
 
-
-// ==========================================
-// CALLBACK ROBLOX
-// ==========================================
-
 app.get("/callback", async (req, res) => {
-
     const code = req.query.code;
-
     const state = req.query.state;
 
-
-    if (req.query.error) {
-
-        return res.status(400).send(`
-
-<!DOCTYPE html>
-
-<html>
-
-<head>
-
-    <meta charset="UTF-8">
-
-    <title>Erro Roblox</title>
-
-</head>
-
-<body>
-
-    <h1>❌ Autorização cancelada</h1>
-
-    <p>${req.query.error}</p>
-
-</body>
-
-</html>
-
-        `);
-
-    }
-
-
     if (!code || !state) {
-
-        return res.status(400).send(
-            "Código ou state não recebido."
-        );
-
+        return res.status(400).send("Código ou state não recebido.");
     }
-
 
     const dados = estados.get(state);
 
-
     if (!dados) {
-
-        return res.status(400).send(
-            "Vinculação inválida ou expirada."
-        );
-
+        return res.status(400).send("Vinculação inválida ou expirada.");
     }
-
 
     estados.delete(state);
 
-
-    console.log(
-        `✅ Roblox autorizado para Discord ID: ${dados.discordId}`
-    );
-
-
-    console.log(
-        "🔑 Código OAuth recebido."
-    );
-
+    console.log("Código OAuth recebido para:", dados.discordId);
 
     res.send(`
-
-<!DOCTYPE html>
-
-<html>
-
-<head>
-
-    <meta charset="UTF-8">
-
-    <title>Vinculação concluída</title>
-
-    <style>
-
-        body {
-
-            font-family: Arial, sans-serif;
-
-            text-align: center;
-
-            padding-top: 80px;
-
-        }
-
-        h1 {
-
-            color: #2ecc71;
-
-        }
-
-    </style>
-
-</head>
-
-<body>
-
-    <h1>✅ Roblox autorizado!</h1>
-
-    <p>
-        Sua autorização foi recebida.
-    </p>
-
-    <p>
-        A vinculação foi registrada.
-    </p>
-
-</body>
-
-</html>
-
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Vinculação Roblox</title>
+        </head>
+        <body>
+            <h1>✅ Roblox autorizado!</h1>
+            <p>A autorização foi recebida.</p>
+            <p>Estamos finalizando a vinculação...</p>
+        </body>
+        </html>
     `);
-
 });
 
+client.on("interactionCreate", async (interaction) => {
+    if (!interaction.isChatInputCommand()) {
+        return;
+    }
 
-// ==========================================
-// COMANDO /VINCULAR
-// ==========================================
+    if (interaction.commandName === "vincular") {
 
-client.on(
-    "interactionCreate",
-    async (interaction) => {
+        const url =
+            `https://eb-discord.onrender.com/oauth/start?discord=${interaction.user.id}`;
 
-        if (!interaction.isChatInputCommand()) {
-
-            return;
-
-        }
-
-
-        if (
-            interaction.commandName !==
-            "vincular"
-        ) {
-
-            return;
-
-        }
-
-
-        try {
-
-            const url =
-                "https://eb-discord.onrender.com/oauth/start" +
-                `?discord=${interaction.user.id}`;
-
-
-            const embed =
-                new EmbedBuilder()
-
-                    .setTitle(
-                        "🔗 Vincular Roblox"
-                    )
-
-                    .setDescription(
-                        "Clique no botão abaixo para vincular sua conta Roblox ao Discord."
-                    );
-
-
-            const botao =
-                new ButtonBuilder()
-
-                    .setLabel(
-                        "Vincular Roblox"
-                    )
-
-                    .setStyle(
-                        ButtonStyle.Link
-                    )
-
-                    .setURL(url);
-
-
-            const linha =
-                new ActionRowBuilder()
-                    .addComponents(botao);
-
-
-            await interaction.reply({
-
-                embeds: [
-                    embed
-                ],
-
-                components: [
-                    linha
-                ]
-
-            });
-
-
-        } catch (erro) {
-
-            console.error(
-                "❌ Erro no comando /vincular:"
+        const embed = new EmbedBuilder()
+            .setTitle("🔗 Vincular Roblox")
+            .setDescription(
+                "Clique no botão abaixo para vincular sua conta Roblox."
             );
 
-            console.error(erro);
+        const botao = new ButtonBuilder()
+            .setLabel("Vincular Roblox")
+            .setStyle(ButtonStyle.Link)
+            .setURL(url);
 
+        const linha = new ActionRowBuilder()
+            .addComponents(botao);
 
-            if (
-                !interaction.replied &&
-                !interaction.deferred
-            ) {
-
-                await interaction.reply({
-
-                    content:
-                        "❌ Ocorreu um erro ao gerar o link de vinculação.",
-
-                    ephemeral: true
-
-                });
-
-            }
-
-        }
-
+        await interaction.reply({
+            embeds: [embed],
+            components: [linha]
+        });
     }
-);
+});
 
+app.listen(PORT, () => {
+    console.log(`Servidor web na porta ${PORT}`);
+});
 
-// ==========================================
-// SERVIDOR WEB
-// ==========================================
-
-app.listen(
-    PORT,
-    "0.0.0.0",
-    () => {
-
-        console.log(
-            "========================================"
-        );
-
-        console.log(
-            "🌐 SERVIDOR WEB INICIADO"
-        );
-
-        console.log(
-            `🌐 PORTA: ${PORT}`
-        );
-
-        console.log(
-            "========================================"
-        );
-
-    }
-);
-
-
-// ==========================================
-// LOGIN DO DISCORD
-// ==========================================
-
-console.log(
-    "🔄 Verificando DISCORD_TOKEN..."
-);
-
-
-if (!process.env.DISCORD_TOKEN) {
-
-    console.error(
-        "❌ DISCORD_TOKEN NÃO FOI ENCONTRADO!"
-    );
-
-} else {
-
-    console.log(
-        "✅ DISCORD_TOKEN encontrado."
-    );
-
-    console.log(
-        "🔄 Tentando conectar ao Discord..."
-    );
-
-
-    client.login(
-        process.env.DISCORD_TOKEN
-    )
-    .then(() => {
-
-        console.log(
-            "✅ LOGIN ENVIADO AO DISCORD!"
-        );
-
-        console.log(
-            "🔄 Aguardando evento READY..."
-        );
-
-    })
-    .catch((erro) => {
-
-        console.error(
-            "❌ ERRO AO CONECTAR AO DISCORD:"
-        );
-
-        console.error(erro);
-
-    });
-
-}
+client.login(process.env.DISCORD_TOKEN);
+EOF
