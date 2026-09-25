@@ -13,25 +13,22 @@ const {
 } = require("discord.js");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
 
-// Guarda temporariamente as vinculações
 const estados = new Map();
 
 client.once("ready", () => {
     console.log(`Bot online como ${client.user.tag}`);
 });
 
-// Página inicial
 app.get("/", (req, res) => {
     res.send("Servidor EB Discord funcionando!");
 });
 
-// Inicia o OAuth da Roblox
 app.get("/oauth/start", (req, res) => {
     const discordId = req.query.discord;
 
@@ -61,31 +58,23 @@ app.get("/oauth/start", (req, res) => {
     res.redirect(url);
 });
 
-// Retorno da Roblox
 app.get("/callback", async (req, res) => {
     const code = req.query.code;
     const state = req.query.state;
 
     if (!code || !state) {
-        return res.status(400).send(
-            "Código ou state não recebido."
-        );
+        return res.status(400).send("Código ou state não recebido.");
     }
 
     const dados = estados.get(state);
 
     if (!dados) {
-        return res.status(400).send(
-            "Vinculação inválida ou expirada."
-        );
+        return res.status(400).send("Vinculação inválida ou expirada.");
     }
 
     estados.delete(state);
 
-    console.log(
-        "Código OAuth recebido para:",
-        dados.discordId
-    );
+    console.log("Código OAuth recebido para:", dados.discordId);
 
     res.send(`
         <!DOCTYPE html>
@@ -95,18 +84,14 @@ app.get("/callback", async (req, res) => {
             <title>Vinculação Roblox</title>
         </head>
         <body>
-            <h1>✅ Roblox autorizado!</h1>
+            <h1>Roblox autorizado!</h1>
             <p>A autorização foi recebida.</p>
             <p>Estamos finalizando a vinculação...</p>
         </body>
         </html>
     `);
-
-    // A troca do código pelo token
-    // será adicionada no próximo passo.
 });
 
-// Comando /vincular
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) {
         return;
@@ -115,12 +100,12 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.commandName === "vincular") {
 
         const url =
-            `https://brothers-organisation-author-admission.trycloudflare.com/oauth/start?discord=${interaction.user.id}`;
+            `https://eb-discord.onrender.com/oauth/start?discord=${interaction.user.id}`;
 
         const embed = new EmbedBuilder()
-            .setTitle("🔗 Vincular Roblox")
+            .setTitle("Vincular Roblox")
             .setDescription(
-                "Clique no botão abaixo para vincular sua conta Roblox ao Discord."
+                "Clique no botão abaixo para vincular sua conta Roblox."
             );
 
         const botao = new ButtonBuilder()
@@ -138,12 +123,8 @@ client.on("interactionCreate", async (interaction) => {
     }
 });
 
-// Inicia o servidor
 app.listen(PORT, () => {
-    console.log(
-        `Servidor web na porta ${PORT}`
-    );
+    console.log(`Servidor web na porta ${PORT}`);
 });
 
-// Liga o bot
 client.login(process.env.DISCORD_TOKEN);
